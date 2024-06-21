@@ -1,1 +1,76 @@
-<template> <div> <h2>Risk & Reward Graph</h2> <line-chart :chart-data="chartData" /> <div> <p>Max Profit: {{ maxProfit }}</p> <p>Max Loss: {{ maxLoss }}</p> <p>Break Even Points: {{ breakEvenPoints.join(', ') }}</p> </div> </div> </template> <script> import { Line } from 'vue-chartjs'; import { Chart, registerables } from 'chart.js'; Chart.register(...registerables); export default { name: 'RiskRewardGraph', components: { LineChart: { extends: Line, props: ['chartData'], mounted() { this.renderChart(this.chartData, { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Underlying Price at Expiry', }, }, y: { title: { display: true, text: 'Profit/Loss', }, }, }, }); }, watch: { chartData() { this.renderChart(this.chartData, { responsive: true, maintainAspectRatio: false, }); }, }, }, }, props: { chartData: Object, maxProfit: Number, maxLoss: Number, breakEvenPoints: Array, }, }; </script> <style scoped> div { width: 100%; height: 400px; } </style>
+<template>
+  <div>
+    <canvas ref="canvas"></canvas>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted, watch } from 'vue';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
+
+export default {
+  name: 'RiskRewardGraph',
+  props: {
+    graphData: {
+      type: Object,
+      required: true
+    }
+  },
+  setup(props) {
+    const canvas = ref(null);
+    let chart = null;
+
+    const renderChart = () => {
+      if (chart) chart.destroy();
+
+      chart = new Chart(canvas.value, {
+        type: 'line',
+        data: props.graphData,
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top'
+            },
+            title: {
+              display: true,
+              text: 'Risk & Reward Graph'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Underlying Price at Expiry'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Profit/Loss'
+              }
+            }
+          }
+        }
+      });
+    };
+
+    onMounted(() => {
+      renderChart();
+    });
+
+    watch(() => props.graphData, () => {
+      renderChart();
+    });
+
+    return {
+      canvas
+    };
+  }
+};
+</script>
+
+<style scoped>
+</style>
